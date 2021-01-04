@@ -18,6 +18,8 @@ The MQTT connection is done via the [Eclipse Paho](https://github.com/eclipse/pa
 
 The nice knob comes from another [GitHub project](https://github.com/o4oren/kotlin-rotary-knob) and is just extended by a little something.
 
+To actually use the app, an mqtt.properties file must be added as an asset. The necessary properties can be taken from the MqttHelper class.
+
 ## Screenshots
 
 The main app view
