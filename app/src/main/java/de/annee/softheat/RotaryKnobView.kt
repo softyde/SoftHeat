@@ -67,14 +67,18 @@ class RotaryKnobView @JvmOverloads constructor(
         val rotationDegrees = calculateAngle(e2.x, e2.y)
         // use only -150 to 150 range (knob min/max points
         if (rotationDegrees >= -150 && rotationDegrees <= 150) {
-            setKnobPosition(rotationDegrees)
 
             // Calculate rotary value
             // The range is the 300 degrees between -150 and 150, so we'll add 150 to adjust the
             // range to 0 - 300
             val valueRangeDegrees = rotationDegrees + 150
-                value = ((valueRangeDegrees / divider) + minValue).toInt()
-                if (listener != null) listener!!.onRotate(value)
+            value = ((valueRangeDegrees / divider) + minValue).toInt()
+
+            // TODO ist doppelt (s.u.) sollte eine eigene Funktion werden
+            val stepDegree: Float = -150.0f + 300.0f * ((value - minValue).toFloat() / (maxValue - minValue).toFloat())
+            setKnobPosition(stepDegree)
+
+            if (listener != null) listener!!.onRotate(value)
         }
         return true
     }
