@@ -31,4 +31,5 @@ Setting the temperature
 ## License
 
 Copyright (c) 2021 Philipp Anné
+
 This project is licensed under the terms of the [MIT license](./LICENSE).
