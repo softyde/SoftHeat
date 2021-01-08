@@ -23,20 +23,15 @@ class MqttHelper(private val context: Context) {
 
     var mqttAndroidClient: MqttAndroidClient
 
-    val topicSensorTargetTemperature : String? by lazy { getProperty("mqtt.topic.sensor.targettemperature", context) }
-    val topicSensorTemperature : String? by lazy { getProperty("mqtt.topic.sensor.temperature", context) }
-    val topicSensorHumidity : String? by lazy { getProperty("mqtt.topic.sensor.humidity", context) }
-    val topicSensorBattery : String? by lazy { getProperty("mqtt.topic.sensor.battery", context) }
-    val topicSensorMode : String? by lazy { getProperty("mqtt.topic.sensor.mode", context) }
-    val topicCommandTargetTemperature : String? by lazy { getProperty("mqtt.topic.command.targettemperature", context) }
+    val topicConfiguration: String = "softheat/configuration"
+    var topicSensorTargetTemperature : String? = null
+    var topicSensorTemperature : String? = null
+    var topicSensorHumidity : String? = null
+    var topicSensorBattery : String? = null
+    var topicSensorMode : String? = null
+    var topicCommandTargetTemperature : String? = null
 
-    val subscriptionTopics = arrayOf(
-        topicSensorTargetTemperature,
-        topicSensorMode,
-        topicSensorTemperature,
-        topicSensorHumidity,
-        topicSensorBattery
-    )
+    val subscriptionTopics = arrayOf<String>()
 
 
 
@@ -64,7 +59,9 @@ class MqttHelper(private val context: Context) {
                     disconnectedBufferOptions.isPersistBuffer = false
                     disconnectedBufferOptions.isDeleteOldestMessages = false
                     mqttAndroidClient.setBufferOpts(disconnectedBufferOptions)
-                    subscribeToTopic()
+
+
+                    subscribeTopic(topicConfiguration)
                 }
 
                 override fun onFailure(asyncActionToken: IMqttToken, exception: Throwable) {
@@ -77,38 +74,71 @@ class MqttHelper(private val context: Context) {
     }
 
     fun publishNewTemp(value: Int) {
-        try {
-            mqttAndroidClient.publish(
-                topicCommandTargetTemperature,
-                MqttMessage(value.toString().toByteArray(charset("ASCII")))
-            )
-        } catch (e: MqttException) {
-            e.printStackTrace()
-        } catch (e: UnsupportedEncodingException) {
-            e.printStackTrace()
+        if(topicCommandTargetTemperature != null) {
+            try {
+                mqttAndroidClient.publish(
+                    topicCommandTargetTemperature,
+                    MqttMessage(value.toString().toByteArray(charset("ASCII")))
+                )
+            } catch (e: MqttException) {
+                e.printStackTrace()
+            } catch (e: UnsupportedEncodingException) {
+                e.printStackTrace()
+            }
         }
     }
 
-    private fun subscribeToTopic() {
+    fun unsubscribeFromTopics() {
         for (subscriptionTopic in subscriptionTopics) {
             try {
+                if (subscriptionTopic != null) {
+                    mqttAndroidClient.unsubscribe(subscriptionTopic)
+                }
+            } catch (ex: MqttException) {
+                System.err.println("Exception whilst unsubscribing")
+                ex.printStackTrace()
+            }
+        }
+    }
+
+    private fun subscribeTopic(subscriptionTopic: String?) {
+        try {
+            if(subscriptionTopic != null) {
                 mqttAndroidClient.subscribe(
                     subscriptionTopic,
                     0,
                     null,
                     object : IMqttActionListener {
                         override fun onSuccess(asyncActionToken: IMqttToken) {
-                            Log.w("mqtt", "Subscribed!")
+                            Log.w("mqtt", "Subscribed to $subscriptionTopic")
                         }
 
-                        override fun onFailure(asyncActionToken: IMqttToken, exception: Throwable) {
+                        override fun onFailure(
+                            asyncActionToken: IMqttToken,
+                            exception: Throwable
+                        ) {
                             Log.w("mqtt", "Subscribed fail!")
                         }
                     })
-            } catch (ex: MqttException) {
-                System.err.println("Exception whilst subscribing")
-                ex.printStackTrace()
             }
+        } catch (ex: MqttException) {
+            System.err.println("Exception whilst subscribing")
+            ex.printStackTrace()
+        }
+    }
+
+    fun subscribeToTopics() {
+
+        val subscriptionTopics = arrayOf(
+            topicSensorTargetTemperature,
+            topicSensorMode,
+            topicSensorTemperature,
+            topicSensorHumidity,
+            topicSensorBattery
+        )
+
+        for (subscriptionTopic in subscriptionTopics) {
+            subscribeTopic(subscriptionTopic)
         }
     }
 
